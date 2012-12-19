@@ -180,6 +180,10 @@ void WiFlyDevice::exitCommandMode() {
 	commandModeFlag = false;
 }
 
+bool WiFlyDevice::isInCommandMode() {
+	return commandModeFlag;
+}
+
 boolean WiFlyDevice::setWakeSleepTimers( int _wakeTimer, int _sleepTimer)
 {
   boolean timerSet=false;
@@ -361,8 +365,8 @@ void WiFlyDevice::reboot() {
 
 
 boolean WiFlyDevice::sendCommand(const __FlashStringHelper *command,
-                                 boolean isMultipartCommand = false,
-                                 const char *expectedResponse = "AOK") {
+                                 boolean isMultipartCommand,
+                                 const char *expectedResponse) {
   /*
    */
   DEBUG_LOG(1, "Entered sendCommand");
@@ -388,8 +392,8 @@ boolean WiFlyDevice::sendCommand(const __FlashStringHelper *command,
 }
 
 boolean WiFlyDevice::sendCommand(const char *command,
-                                 boolean isMultipartCommand = false,
-                                 const char *expectedResponse = "AOK") {
+                                 boolean isMultipartCommand,
+                                 const char *expectedResponse) {
   /*
    */
   DEBUG_LOG(1, "Entered sendCommand");
@@ -684,17 +688,28 @@ boolean WiFlyDevice::createAdHocNetwork(const char *ssid)
   //After rebooting, your AdHoc network will be available.
 }
 
-void WiFlyDevice::useUDP()
+void WiFlyDevice::useUDP(int localPort, int remotePort)
 {
-  if (commandModeFlag) 
-  {
+	if (commandModeFlag) 
+	{
 		exitCommandMode();
 	}
 	enterCommandMode();
-	
+
 	sendCommand("set ip protocol 1", false);
-	sendCommand("set ip localport 80", false);
-	
+
+	if (localPort > 0) {
+		sendCommand("set ip localport ", true);
+		uart->print(localPort);
+		sendCommand("");
+	}
+
+	if (localPort > 0) {
+		sendCommand("set ip remote ", true);
+		uart->print(remotePort);
+		sendCommand("");
+	}
+
 	exitCommandMode();
 }
 
