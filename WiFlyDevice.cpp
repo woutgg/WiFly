@@ -277,11 +277,7 @@ void  WiFlyDevice::setUart(Stream* newUart)
   uart = newUart;
 }
 
-void WiFlyDevice::begin() {
-	begin(false);
-}
-
-void WiFlyDevice::begin(boolean adhocMode) {
+void WiFlyDevice::begin(boolean adhocMode, const char* ssid) {
   /*
    */
   DEBUG_LOG(1, "Entered WiFlyDevice::begin()");
@@ -289,7 +285,7 @@ void WiFlyDevice::begin(boolean adhocMode) {
   if (!bDifferentUart) SPIuart.begin();
   reboot(); // Reboot to get device into known state
   //requireFlowControl();
-  setConfiguration(adhocMode);
+  setConfiguration(adhocMode, ssid);
 }
 
 // TODO: Create a `begin()` that allows IP etc to be supplied.
@@ -582,7 +578,7 @@ void WiFlyDevice::requireFlowControl() {
   reboot();
 }
 
-void WiFlyDevice::setConfiguration(boolean adhocMode) {
+void WiFlyDevice::setConfiguration(boolean adhocMode, const char* ssid) {
   /*
    */
   enterCommandMode();
@@ -619,7 +615,8 @@ void WiFlyDevice::setConfiguration(boolean adhocMode) {
   } 
   else
   {
-	setAdhocParams();
+	//setAdhocParams();
+	createAdHocNetwork(ssid);
   }
   // Turn off status messages
   // sendCommand(F("set sys printlvl 0"));
@@ -634,7 +631,7 @@ void WiFlyDevice::setConfiguration(boolean adhocMode) {
 void WiFlyDevice::setAdhocParams()
 {
 	// Disable Auto-connect
-	sendCommand(F("set wlan join 0"));
+	sendCommand(F("set wlan join 4"));
 	
 	// Disable Authentication for AdHoc Mode
 	sendCommand(F("set wlan auth 0"));
@@ -863,6 +860,10 @@ boolean WiFlyDevice::configure(byte option, unsigned long value) {
 
 
 #define TIME_SIZE 11 // 1311006129
+
+void WiFlyDevice::setServerPort(uint16_t port) {
+	serverPort = port;
+}
 
 long WiFlyDevice::getTime(){
 
