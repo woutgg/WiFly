@@ -693,7 +693,8 @@ void WiFlyDevice::useUDP(int localPort, int remotePort)
 	}
 	enterCommandMode();
 
-	sendCommand("set ip protocol 1", false);
+	//enable UDP as well as TCP server+Client
+	sendCommand("set ip protocol 3", false);
 
 	if (localPort > 0) {
 		sendCommand("set ip localport ", true);
@@ -839,7 +840,8 @@ boolean WiFlyDevice::configure(byte option, unsigned long value) {
       enterCommandMode();
       uart->print("set uart instant ");
       uart->println(value);
-      delay(10); // If we don't have this here when we specify the
+	  //NOTE: not sure what value this should really be but I think it relates to the 10*bitrate delay mentioned in the spec, 500ms seems to work at least for the range of 2400 to 921600 baud.
+      delay(500); // If we don't have this here when we specify the
                  // baud as a number rather than a string it seems to
                  // fail. TODO: Find out why.
       SPIuart.begin(value);
@@ -847,6 +849,7 @@ boolean WiFlyDevice::configure(byte option, unsigned long value) {
       // the change of SPI UART serial rate above--even though the
       // documentation says the AOK is returned at the old baud
       // rate. TODO: Find out why
+	  // NOTE: the docs (11/9/2011) do specify AOK is output at the new baud rate
       if (!findInResponse("AOK", 100)) {
         return false;
       }
