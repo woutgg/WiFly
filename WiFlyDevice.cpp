@@ -693,8 +693,10 @@ void WiFlyDevice::useUDP(int localPort, int remotePort)
 	}
 	enterCommandMode();
 
-	//enable UDP as well as TCP server+Client
-	sendCommand("set ip protocol 3", false);
+	////enable UDP as well as TCP server+Client
+	//sendCommand("set ip protocol 3", false);
+	//enable UDP server+Client
+	sendCommand("set ip protocol 1", false);
 
 	if (localPort > 0) {
 		sendCommand("set ip localport ", true);
