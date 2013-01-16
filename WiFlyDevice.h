@@ -10,7 +10,7 @@ public:
 	WiFlyDevice(SpiUartDevice& theUart);
 
 	void setUart(Stream* newUart);
-	void begin(boolean adhocMode = false, const char* ssid = 0);
+	void begin(boolean adhocMode = false, const char* ssid = 0, boolean externalAntenna = false);
 	boolean createAdHocNetwork(const char *ssid);
 
 	boolean join(const char *ssid);
@@ -78,6 +78,7 @@ private:
 	void requireFlowControl();
 	void setConfiguration(boolean adhocMode, const char* ssid);
 	void setAdhocParams();
+	void setUseExternalAntenna(boolean useExternal);
 	void waitForResponse(const char *toMatch);
 	void skipRemainderOfResponse();
 	boolean responseMatched(const char *toMatch);

@@ -9,91 +9,91 @@
 
 
 boolean WiFlyDevice::findInResponse(const char *toMatch,
-                                    unsigned int timeOut = 1000) {
-  /*
+		unsigned int timeOut = 1000) {
+	/*
 
-   */
+*/
 
-  // TODO: Change 'sendCommand' to use 'findInResponse' and have timeouts,
-  //       and then use 'sendCommand' in routines that call 'findInResponse'?
+	// TODO: Change 'sendCommand' to use 'findInResponse' and have timeouts,
+	//       and then use 'sendCommand' in routines that call 'findInResponse'?
 
-  // TODO: Don't reset timer after successful character read? Or have two
-  //       types of timeout?
+	// TODO: Don't reset timer after successful character read? Or have two
+	//       types of timeout?
 
-  int byteRead;
+	int byteRead;
 
-  unsigned long timeOutTarget; // in milliseconds
+	unsigned long timeOutTarget; // in milliseconds
 
-  DEBUG_LOG(1, "Entered findInResponse");
-  DEBUG_LOG(2, "Want to match:");
-  DEBUG_LOG(2, toMatch);
-  DEBUG_LOG(3, "Found:");
+	DEBUG_LOG(1, "Entered findInResponse");
+	DEBUG_LOG(2, "Want to match:");
+	DEBUG_LOG(2, toMatch);
+	DEBUG_LOG(3, "Found:");
 
-  for (unsigned int offset = 0; offset < strlen(toMatch); offset++) {
+	for (unsigned int offset = 0; offset < strlen(toMatch); offset++) {
 
-    // Reset after successful character read
-    timeOutTarget = millis() + timeOut; // Doesn't handle timer wrapping
+		// Reset after successful character read
+		timeOutTarget = millis() + timeOut; // Doesn't handle timer wrapping
 
-    while (!uart->available()) {
-      // Wait, with optional time out.
-      if (timeOut > 0) {
-        if (millis() > timeOutTarget) {
-          return false;
-        }
-      }
-      delay(1); // This seems to improve reliability slightly
-    }
+		while (!uart->available()) {
+			// Wait, with optional time out.
+			if (timeOut > 0) {
+				if (millis() > timeOutTarget) {
+					return false;
+				}
+			}
+			delay(1); // This seems to improve reliability slightly
+		}
 
-    // We read this separately from the conditional statement so we can
-    // log the character read when debugging.
-    byteRead = uart->read();
+		// We read this separately from the conditional statement so we can
+		// log the character read when debugging.
+		byteRead = uart->read();
 
-    delay(1); // Removing logging may affect timing slightly
+		delay(1); // Removing logging may affect timing slightly
 
-    DEBUG_LOG(5, "Offset:");
-    DEBUG_LOG(5, offset);
-    DEBUG_LOG(3, (char) byteRead);
-    DEBUG_LOG(4, byteRead);
+		DEBUG_LOG(5, "Offset:");
+		DEBUG_LOG(5, offset);
+		DEBUG_LOG(3, (char) byteRead);
+		DEBUG_LOG(4, byteRead);
 
-    if (byteRead != toMatch[offset]) {
-      offset = 0;
-      // Ignore character read if it's not a match for the start of the string
-      if (byteRead != toMatch[offset]) {
-        offset = -1;
-      }
-      continue;
-    }
-  }
-  DEBUG_LOG(2, "Response found");
+		if (byteRead != toMatch[offset]) {
+			offset = 0;
+			// Ignore character read if it's not a match for the start of the string
+			if (byteRead != toMatch[offset]) {
+				offset = -1;
+			}
+			continue;
+		}
+	}
+	DEBUG_LOG(2, "Response found");
 
-  return true;
+	return true;
 }
 
 
 
 boolean WiFlyDevice::responseMatched(const char *toMatch) {
-  /*
-   */
-  boolean matchFound = true;
-  unsigned long timeout;
+	/*
+	*/
+	boolean matchFound = true;
+	unsigned long timeout;
 
-DEBUG_LOG(3, "Entered responseMatched");
-  for (unsigned int offset = 0; offset < strlen(toMatch); offset++) {
-    timeout = millis();
-    while (!uart->available()) {
-      // Wait, with optional time out.
-      if (millis() - timeout > 5000) {
-          return false;
-        }
-      delay(1); // This seems to improve reliability slightly
-    }
-DEBUG_LOG(3,(char)uart->peek());
-    if (uart->read() != toMatch[offset]) {
-      matchFound = false;
-      break;
-    }
-  }
-  return matchFound;
+	DEBUG_LOG(3, "Entered responseMatched");
+	for (unsigned int offset = 0; offset < strlen(toMatch); offset++) {
+		timeout = millis();
+		while (!uart->available()) {
+			// Wait, with optional time out.
+			if (millis() - timeout > 5000) {
+				return false;
+			}
+			delay(1); // This seems to improve reliability slightly
+		}
+		DEBUG_LOG(3,(char)uart->peek());
+		if (uart->read() != toMatch[offset]) {
+			matchFound = false;
+			break;
+		}
+	}
+	return matchFound;
 }
 
 
@@ -103,71 +103,71 @@ DEBUG_LOG(3,(char)uart->peek());
 #define COMMAND_MODE_GUARD_TIME 250 // in milliseconds
 
 boolean WiFlyDevice::enterCommandMode(boolean isAfterBoot) {
-  /*
+	/*
 
-   */
+*/
 
-  DEBUG_LOG(1, "Entered enterCommandMode");
+	DEBUG_LOG(1, "Entered enterCommandMode");
 
-  // Note: We used to first try to exit command mode in case we were
-  //       already in it. Doing this actually seems to be less
-  //       reliable so instead we now just ignore the errors from
-  //       sending the "$$$" in command mode.
+	// Note: We used to first try to exit command mode in case we were
+	//       already in it. Doing this actually seems to be less
+	//       reliable so instead we now just ignore the errors from
+	//       sending the "$$$" in command mode.
 
-  for (int retryCount = 0;
-       retryCount < COMMAND_MODE_ENTER_RETRY_ATTEMPTS;
-       retryCount++) {
+	for (int retryCount = 0;
+			retryCount < COMMAND_MODE_ENTER_RETRY_ATTEMPTS;
+			retryCount++) {
 
-    // At first I tried automatically performing the
-    // wait-send-wait-send-send process twice before checking if it
-    // succeeded. But I removed the automatic retransmission even
-    // though it makes things  marginally less reliable because it speeds
-    // up the (hopefully) more common case of it working after one
-    // transmission. We also now have automatic-retries for the whole
-    // process now so it's less important anyway.
+		// At first I tried automatically performing the
+		// wait-send-wait-send-send process twice before checking if it
+		// succeeded. But I removed the automatic retransmission even
+		// though it makes things  marginally less reliable because it speeds
+		// up the (hopefully) more common case of it working after one
+		// transmission. We also now have automatic-retries for the whole
+		// process now so it's less important anyway.
 
-    if (isAfterBoot) {
-      delay(1000); // This delay is so characters aren't missed after a reboot.
-    }
+		if (isAfterBoot) {
+			delay(1000); // This delay is so characters aren't missed after a reboot.
+		}
 
-    delay(COMMAND_MODE_GUARD_TIME);
+		delay(COMMAND_MODE_GUARD_TIME);
 
-    uart->print(F("$$$"));
+		uart->print(F("$$$"));
 
-    delay(COMMAND_MODE_GUARD_TIME);
+		delay(COMMAND_MODE_GUARD_TIME);
 
-    // We could already be in command mode or not.
-    // We could also have a half entered command.
-    // If we have a half entered command the "$$$" we've just added
-    // could succeed or it could trigger an error--there's a small
-    // chance it could also screw something up (by being a valid
-    // argument) but hopefully it's not a general issue.  Sending
-    // these two newlines is intended to clear any partial commands if
-    // we're in command mode and in either case trigger the display of
-    // the version prompt (not that we actually check for it at the moment
-    // (anymore)).
+		// We could already be in command mode or not.
+		// We could also have a half entered command.
+		// If we have a half entered command the "$$$" we've just added
+		// could succeed or it could trigger an error--there's a small
+		// chance it could also screw something up (by being a valid
+		// argument) but hopefully it's not a general issue.  Sending
+		// these two newlines is intended to clear any partial commands if
+		// we're in command mode and in either case trigger the display of
+		// the version prompt (not that we actually check for it at the moment
+		// (anymore)).
 
-    // TODO: Determine if we need less boilerplate here.
+		// TODO: Determine if we need less boilerplate here.
 
-    uart->println();
-    uart->println();
+		uart->println();
+		uart->println();
 
-    // TODO: Add flush with timeout here?
+		// TODO: Add flush with timeout here?
 
-    // This is used to determine whether command mode has been entered
-    // successfully.
-    // TODO: Find alternate approach or only use this method after a (re)boot?
-    uart->println(F("ver"));
+		// This is used to determine whether command mode has been entered
+		// successfully.
+		// TODO: Find alternate approach or only use this method after a (re)boot?
+		uart->println(F("ver"));
 
-    if (findInResponse("\r\nWiFly Ver", 1000)) {
-      // TODO: Flush or leave remainder of output?
-      // flush!! Why would want the remainder for every time we go into command mode?
-      uart->flush();
-      commandModeFlag=true;
-      return true;
-    }
-  }
-  return false;
+		if (findInResponse("\r\nWiFly Ver", 1000)) {
+			// TODO: Flush or leave remainder of output?
+			// flush!! Why would want the remainder for every time we go into command mode?
+			uart->flush();
+			commandModeFlag=true;
+			return true;
+		}
+	}
+	return false;
 }
 
 void WiFlyDevice::exitCommandMode() {
@@ -186,85 +186,85 @@ bool WiFlyDevice::isInCommandMode() {
 
 boolean WiFlyDevice::setWakeSleepTimers( int _wakeTimer, int _sleepTimer)
 {
-  boolean timerSet=false;
-  String cmd1="set sys wake ";
-  String cmd2="set sys sleep ";
-  if(_sleepTimer!=0 && _wakeTimer==0)
-  {
-    // This would make the wifly never wake up!!!!!
-    timerSet=false;
-  }
-  else
-  {
-    if (commandModeFlag) 
-    {
-	  	exitCommandMode();
-	  }
-	  enterCommandMode(); 
-	  cmd1+=_wakeTimer;
-	  char charBuf1[cmd1.length()+1];
-    cmd1.toCharArray(charBuf1, cmd1.length()+1);
-	  boolean wakeOk=sendCommand(charBuf1,false,"AOK");
-	  if(wakeOk)
-	  {
-	    cmd2+= _sleepTimer;
-	    char charBuf2[cmd2.length()+1];
-      cmd2.toCharArray(charBuf2, cmd2.length()+1);
-	    timerSet=sendCommand(charBuf2,false,"AOK");
-	  }
-  }
-  sendCommand("save",false,"AOK");
-  exitCommandMode();
-  return timerSet;
+	boolean timerSet=false;
+	String cmd1="set sys wake ";
+	String cmd2="set sys sleep ";
+	if(_sleepTimer!=0 && _wakeTimer==0)
+	{
+		// This would make the wifly never wake up!!!!!
+		timerSet=false;
+	}
+	else
+	{
+		if (commandModeFlag) 
+		{
+			exitCommandMode();
+		}
+		enterCommandMode(); 
+		cmd1+=_wakeTimer;
+		char charBuf1[cmd1.length()+1];
+		cmd1.toCharArray(charBuf1, cmd1.length()+1);
+		boolean wakeOk=sendCommand(charBuf1,false,"AOK");
+		if(wakeOk)
+		{
+			cmd2+= _sleepTimer;
+			char charBuf2[cmd2.length()+1];
+			cmd2.toCharArray(charBuf2, cmd2.length()+1);
+			timerSet=sendCommand(charBuf2,false,"AOK");
+		}
+	}
+	sendCommand("save",false,"AOK");
+	exitCommandMode();
+	return timerSet;
 }
 
 void WiFlyDevice::sleepNow()
 {
-  if (commandModeFlag) 
-  {
-  	exitCommandMode();
-  }
+	if (commandModeFlag) 
+	{
+		exitCommandMode();
+	}
 	enterCommandMode(); 
-  sendCommand("sleep",false,"AOK");
-  exitCommandMode(); // Just in case, as the WiFly will sleep before reaching here.
+	sendCommand("sleep",false,"AOK");
+	exitCommandMode(); // Just in case, as the WiFly will sleep before reaching here.
 }
 
 
 
 void WiFlyDevice::skipRemainderOfResponse() {
-  /*
-   */
+	/*
+	*/
 
-  DEBUG_LOG(3, "Entered skipRemainderOfResponse");
+	DEBUG_LOG(3, "Entered skipRemainderOfResponse");
 
-    while (!(uart->available() && (uart->read() == '\n'))) {
-      // Skip remainder of response
-    }
+	while (!(uart->available() && (uart->read() == '\n'))) {
+		// Skip remainder of response
+	}
 }
 
 
 void WiFlyDevice::waitForResponse(const char *toMatch) {
-  /*
-   */
-   // Note: Never exits if the correct response is never found
-   findInResponse(toMatch);
- 
+	/*
+	*/
+	// Note: Never exits if the correct response is never found
+	findInResponse(toMatch);
+
 }
 
 
 
 WiFlyDevice::WiFlyDevice(SpiUartDevice& theUart) : SPIuart (theUart) {
-  /*
+	/*
 
-    Note: Supplied UART should/need not have been initialised first.
+Note: Supplied UART should/need not have been initialised first.
 
-   */
-  bDifferentUart = 0;
-  uart = &SPIuart;
-  // The WiFly requires the server port to be set between the `reboot`
-  // and `join` commands so we go for a "useful" default first.
-  serverPort = DEFAULT_SERVER_PORT;
-  serverConnectionActive = false;
+*/
+	bDifferentUart = 0;
+	uart = &SPIuart;
+	// The WiFly requires the server port to be set between the `reboot`
+	// and `join` commands so we go for a "useful" default first.
+	serverPort = DEFAULT_SERVER_PORT;
+	serverConnectionActive = false;
 }
 
 // TODO: Create a constructor that allows a SpiUartDevice (or better a "Stream") to be supplied
@@ -273,19 +273,18 @@ WiFlyDevice::WiFlyDevice(SpiUartDevice& theUart) : SPIuart (theUart) {
 
 void  WiFlyDevice::setUart(Stream* newUart)
 {
-  bDifferentUart = 1;
-  uart = newUart;
+	bDifferentUart = 1;
+	uart = newUart;
 }
 
-void WiFlyDevice::begin(boolean adhocMode, const char* ssid) {
-  /*
-   */
-  DEBUG_LOG(1, "Entered WiFlyDevice::begin()");
+void WiFlyDevice::begin(boolean adhocMode, const char* ssid, boolean externalAntenna) {
+	DEBUG_LOG(1, "Entered WiFlyDevice::begin()");
 
-  if (!bDifferentUart) SPIuart.begin();
-  reboot(); // Reboot to get device into known state
-  //requireFlowControl();
-  setConfiguration(adhocMode, ssid);
+	if (!bDifferentUart) SPIuart.begin();
+	reboot(); // Reboot to get device into known state
+	setUseExternalAntenna(externalAntenna);
+	//requireFlowControl();
+	setConfiguration(adhocMode, ssid);
 }
 
 // TODO: Create a `begin()` that allows IP etc to be supplied.
@@ -295,49 +294,49 @@ void WiFlyDevice::begin(boolean adhocMode, const char* ssid) {
 #define SOFTWARE_REBOOT_RETRY_ATTEMPTS 5
 
 boolean WiFlyDevice::softwareReboot(boolean isAfterBoot = true) {
-  /*
+	/*
 
-   */
+*/
 
-  DEBUG_LOG(1, "Entered softwareReboot");
+	DEBUG_LOG(1, "Entered softwareReboot");
 
-  for (int retryCount = 0;
-       retryCount < SOFTWARE_REBOOT_RETRY_ATTEMPTS;
-       retryCount++) {
+	for (int retryCount = 0;
+			retryCount < SOFTWARE_REBOOT_RETRY_ATTEMPTS;
+			retryCount++) {
 
-    // TODO: Have the post-boot delay here rather than in enterCommandMode()?
+		// TODO: Have the post-boot delay here rather than in enterCommandMode()?
 
-    if (!enterCommandMode(isAfterBoot)) {
-      return false; // If the included retries have failed we give up
-    }
+		if (!enterCommandMode(isAfterBoot)) {
+			return false; // If the included retries have failed we give up
+		}
 
-    uart->println(F("reboot"));
+		uart->println(F("reboot"));
 
-    // For some reason the full "*Reboot*" message doesn't always
-    // seem to be received so we look for the later "*READY*" message instead.
+		// For some reason the full "*Reboot*" message doesn't always
+		// seem to be received so we look for the later "*READY*" message instead.
 
-    // TODO: Extract information from boot? e.g. version and MAC address
+		// TODO: Extract information from boot? e.g. version and MAC address
 
-    if (findInResponse("*READY*", 2000)) {
-      return true;
-    }
-  }
+		if (findInResponse("*READY*", 2000)) {
+			return true;
+		}
+	}
 
-  return false;
+	return false;
 }
 
 boolean WiFlyDevice::hardwareReboot() {
-  /*
-   */
-  if (!bDifferentUart)
-  {
-    SPIuart.ioSetDirection(0b00000010);
-    SPIuart.ioSetState(0b00000000);
-    delay(1);
-    SPIuart.ioSetState(0b00000010);
-    return findInResponse("*READY*", 2000);
-  }
-  return softwareReboot();
+	/*
+	*/
+	if (!bDifferentUart)
+	{
+		SPIuart.ioSetDirection(0b00000010);
+		SPIuart.ioSetState(0b00000000);
+		delay(1);
+		SPIuart.ioSetState(0b00000010);
+		return findInResponse("*READY*", 2000);
+	}
+	return softwareReboot();
 }
 
 
@@ -348,156 +347,156 @@ boolean WiFlyDevice::hardwareReboot() {
 #endif
 
 void WiFlyDevice::reboot() {
-  /*
-   */
+	/*
+	*/
 
-  DEBUG_LOG(1, "Entered reboot");
+	DEBUG_LOG(1, "Entered reboot");
 
-  if (!REBOOT()) {
-    DEBUG_LOG(1, "Failed to reboot. Halting.");
-    while (1) {}; // Hang. TODO: Handle differently?
-  }
+	if (!REBOOT()) {
+		DEBUG_LOG(1, "Failed to reboot. Halting.");
+		while (1) {}; // Hang. TODO: Handle differently?
+	}
 }
 
 
 boolean WiFlyDevice::sendCommand(const __FlashStringHelper *command,
-                                 boolean isMultipartCommand,
-                                 const char *expectedResponse) {
-  /*
-   */
-  DEBUG_LOG(1, "Entered sendCommand");
-  DEBUG_LOG(2, "Command:");
-  DEBUG_LOG(2, command);
-  uart->print(command);
-  delay(20);
-  if (!isMultipartCommand) {
-    uart->flush();
-    uart->println();
+		boolean isMultipartCommand,
+		const char *expectedResponse) {
+	/*
+	*/
+	DEBUG_LOG(1, "Entered sendCommand");
+	DEBUG_LOG(2, "Command:");
+	DEBUG_LOG(2, command);
+	uart->print(command);
+	delay(20);
+	if (!isMultipartCommand) {
+		uart->flush();
+		uart->println();
 
-    // TODO: Handle other responses
-    //       (e.g. autoconnect message before it's turned off,
-    //        DHCP messages, and/or ERR etc)
-    if (!findInResponse(expectedResponse, 1000)) {
-      return false;
-    }
-    //waitForResponse(expectedResponse);
-  }
-  DEBUG_LOG(2, "sendCommand exit True");
+		// TODO: Handle other responses
+		//       (e.g. autoconnect message before it's turned off,
+		//        DHCP messages, and/or ERR etc)
+		if (!findInResponse(expectedResponse, 1000)) {
+			return false;
+		}
+		//waitForResponse(expectedResponse);
+	}
+	DEBUG_LOG(2, "sendCommand exit True");
 
-  return true;
+	return true;
 }
 
 boolean WiFlyDevice::sendCommand(const char *command,
-                                 boolean isMultipartCommand,
-                                 const char *expectedResponse) {
-  /*
-   */
-  DEBUG_LOG(1, "Entered sendCommand");
-  DEBUG_LOG(2, "Command:");
-  DEBUG_LOG(2, command);
-  uart->print(command);
-  delay(20);
-  if (!isMultipartCommand) {
-    uart->flush();
-    uart->println();
+		boolean isMultipartCommand,
+		const char *expectedResponse) {
+	/*
+	*/
+	DEBUG_LOG(1, "Entered sendCommand");
+	DEBUG_LOG(2, "Command:");
+	DEBUG_LOG(2, command);
+	uart->print(command);
+	delay(20);
+	if (!isMultipartCommand) {
+		uart->flush();
+		uart->println();
 
-    // TODO: Handle other responses
-    //       (e.g. autoconnect message before it's turned off,
-    //        DHCP messages, and/or ERR etc)
-    if (!findInResponse(expectedResponse, 1000)) {
-      return false;
-    }
-    //waitForResponse(expectedResponse);
-  }
-  DEBUG_LOG(2, "sendCommand exit True");
+		// TODO: Handle other responses
+		//       (e.g. autoconnect message before it's turned off,
+		//        DHCP messages, and/or ERR etc)
+		if (!findInResponse(expectedResponse, 1000)) {
+			return false;
+		}
+		//waitForResponse(expectedResponse);
+	}
+	DEBUG_LOG(2, "sendCommand exit True");
 
-  return true;
+	return true;
 }
 
 const char * WiFlyDevice::getConnectionStatus()
 {
-  static char status[4]="";
-  char newChar;
-  byte offset = 0;
-  
-  if (commandModeFlag) {
+	static char status[4]="";
+	char newChar;
+	byte offset = 0;
+
+	if (commandModeFlag) {
 		exitCommandMode();
 	}
 
 	enterCommandMode();
-  
-  if(sendCommand("show c ",false,"8"))
-  {
-    while (offset < 4)
-    {
-      newChar = uart->read();
-      if (newChar != -1) 
-      {
-        status[offset] = newChar;
-        offset++;
-      }
-    }
-    status[3]=0;
-  }
-  
-  exitCommandMode();
-  
-  return status;
+
+	if(sendCommand("show c ",false,"8"))
+	{
+		while (offset < 4)
+		{
+			newChar = uart->read();
+			if (newChar != -1) 
+			{
+				status[offset] = newChar;
+				offset++;
+			}
+		}
+		status[3]=0;
+	}
+
+	exitCommandMode();
+
+	return status;
 }
 
 int WiFlyDevice::available()
 {
-  return uart->available();
+	return uart->available();
 }
 
 char WiFlyDevice::getChar()
 {
-  char ret=' ';
-  if(available()) 
-  ret=uart->read();
-  return ret;
+	char ret=' ';
+	if(available()) 
+		ret=uart->read();
+	return ret;
 }
 
 boolean WiFlyDevice::readTimeout(char *chp, uint16_t timeout)
 {
-  uint32_t start = millis();
-  char ch;
-  static int ind=0;
-  while (millis() - start < timeout) {
-	if (uart->available() > 0) {
-    ch = uart->read();
-	  *chp = ch;
-	    /*
-	    if (dbgInd < dbgMax) {
-		dbgBuf[dbgInd++] = ch;
-	    }
-	    */
-	    /*
-	    if (debugOn) {
-		debug.print(ind++);
-		debug.print(F(": "));
-		debug.print(ch,HEX);
-		if (isprint(ch)) {
-		    debug.print(' ');
-		    debug.print(ch);
+	uint32_t start = millis();
+	char ch;
+	static int ind=0;
+	while (millis() - start < timeout) {
+		if (uart->available() > 0) {
+			ch = uart->read();
+			*chp = ch;
+			/*
+			   if (dbgInd < dbgMax) {
+			   dbgBuf[dbgInd++] = ch;
+			   }
+			   */
+			/*
+			   if (debugOn) {
+			   debug.print(ind++);
+			   debug.print(F(": "));
+			   debug.print(ch,HEX);
+			   if (isprint(ch)) {
+			   debug.print(' ');
+			   debug.print(ch);
+			   }
+			   debug.println();
+			   }*/
+			return true;
 		}
-		debug.println();
-	    }*/
-	    return true;
 	}
-    }
-/*
-    if (debugOn) {
-	debug.println(F("readTimeout - timed out"));
-    }
-*/
-    return false;
+	/*
+	   if (debugOn) {
+	   debug.println(F("readTimeout - timed out"));
+	   }
+	   */
+	return false;
 }
 
 void WiFlyDevice::flushRx(int timeout)
 {
-  char ch;
-  while (readTimeout(&ch,timeout));
+	char ch;
+	while (readTimeout(&ch,timeout));
 }
 
 int WiFlyDevice::readBufTimeout(char* buf, int size, uint16_t timeout){
@@ -506,15 +505,15 @@ int WiFlyDevice::readBufTimeout(char* buf, int size, uint16_t timeout){
 	while(readTimeout(buf+pos, timeout)&& pos<size-1){
 		//DPRINT(buf[pos]);
 		pos++;
-		};
+	};
 	//make sure the buffer is zero terminated
 	buf[pos]=0;
 	return (pos);
 }
 
 size_t  WiFlyDevice::write(const uint8_t *buffer, size_t size) {
-  /*
-   */
+	/*
+	*/
 	while(size--)
 		uart->write(*buffer++);
 	return size;
@@ -522,123 +521,133 @@ size_t  WiFlyDevice::write(const uint8_t *buffer, size_t size) {
 
 void WiFlyDevice::flush()
 {
-  uart->flush();
+	uart->flush();
 }
 
 
 void WiFlyDevice::requireFlowControl() {
-  /*
+	/*
 
 
-    Note: If flow control has been set but not saved then this
-          function won't handle it correctly.
+Note: If flow control has been set but not saved then this
+function won't handle it correctly.
 
-    Note: Any other configuration changes made since the last
-          reboot will also be saved by this function so this
-          function should ideally be called immediately after a
-          reboot.
+Note: Any other configuration changes made since the last
+reboot will also be saved by this function so this
+function should ideally be called immediately after a
+reboot.
 
-   */
+*/
 
-  DEBUG_LOG(1, "Entered requireFlowControl");
+	DEBUG_LOG(1, "Entered requireFlowControl");
 
-  enterCommandMode();
+	enterCommandMode();
 
-  // TODO: Reboot here to ensure we get an accurate response and
-  //       don't unintentionally save a configuration we don't intend?
+	// TODO: Reboot here to ensure we get an accurate response and
+	//       don't unintentionally save a configuration we don't intend?
 
-  sendCommand(F("get uart"), false, "Flow=0x");
+	sendCommand(F("get uart"), false, "Flow=0x");
 
-  while (!uart->available()) {
-    // Wait to ensure we have the full response
-  }
+	while (!uart->available()) {
+		// Wait to ensure we have the full response
+	}
 
-  char flowControlState = uart->read();
+	char flowControlState = uart->read();
 
-  uart->flush();
+	uart->flush();
 
-  if (flowControlState == '1') {
-    return;
-  }
+	if (flowControlState == '1') {
+		return;
+	}
 
-  // Enable flow control
-  sendCommand(F("set uart flow 1"));
+	// Enable flow control
+	sendCommand(F("set uart flow 1"));
 
-  sendCommand(F("save"), false, "Storing in config");
+	sendCommand(F("save"), false, "Storing in config");
 
-  // Without this (or some delay--but this seemed more useful/reliable)
-  // the reboot will fail because we seem to lose the response from the
-  // WiFly and end up with something like:
-  //     "*ReboWiFly Ver 2.18"
-  // instead of the correct:
-  //     "*Reboot*WiFly Ver 2.18"
-  // TODO: Solve the underlying problem
-  sendCommand(F("get uart"), false, "Flow=0x1");
+	// Without this (or some delay--but this seemed more useful/reliable)
+	// the reboot will fail because we seem to lose the response from the
+	// WiFly and end up with something like:
+	//     "*ReboWiFly Ver 2.18"
+	// instead of the correct:
+	//     "*Reboot*WiFly Ver 2.18"
+	// TODO: Solve the underlying problem
+	sendCommand(F("get uart"), false, "Flow=0x1");
 
-  reboot();
+	reboot();
 }
 
 void WiFlyDevice::setConfiguration(boolean adhocMode, const char* ssid) {
-  /*
-   */
-  enterCommandMode();
+	/*
+	*/
+	enterCommandMode();
 
-  // TODO: Handle configuration better
-  // Turn off auto-connect
-  sendCommand(F("set wlan join 0"));
+	// TODO: Handle configuration better
+	// Turn off auto-connect
+	sendCommand(F("set wlan join 0"));
 
-  // TODO: Turn off server functionality until needed
-  //       with "set ip protocol <something>"
+	// TODO: Turn off server functionality until needed
+	//       with "set ip protocol <something>"
 
-  // Set server port
-  sendCommand(F("set ip localport "), true);
-  // TODO: Handle numeric arguments correctly.
-  uart->print(serverPort);
-  sendCommand("");
+	// Set server port
+	sendCommand(F("set ip localport "), true);
+	// TODO: Handle numeric arguments correctly.
+	uart->print(serverPort);
+	sendCommand("");
 
-  // Turn off remote connect message
-  sendCommand(F("set comm remote 0"));
+	// Turn off remote connect message
+	sendCommand(F("set comm remote 0"));
 
-  sendCommand(F("set t z 23"));
-  sendCommand(F("set time address 129.6.15.28"));
-  sendCommand(F("set time port 123"));
-  sendCommand(F("set t e 15"));
+	sendCommand(F("set t z 23"));
+	sendCommand(F("set time address 129.6.15.28"));
+	sendCommand(F("set time port 123"));
+	sendCommand(F("set t e 15"));
 
-  // CDT: Enable the DHCP mode again, if the shield
-  // was last used in AdHoc mode we won't do things correctly without
-  // these changes.
-  if(!adhocMode)
-  {
-	sendCommand(F("set wlan auth 4"));
-	
-	sendCommand(F("set ip dhcp 1"));
-  } 
-  else
-  {
-	//setAdhocParams();
-	createAdHocNetwork(ssid);
-  }
-  // Turn off status messages
-  // sendCommand(F("set sys printlvl 0"));
+	// CDT: Enable the DHCP mode again, if the shield
+	// was last used in AdHoc mode we won't do things correctly without
+	// these changes.
+	if(!adhocMode)
+	{
+		sendCommand(F("set wlan auth 4"));
 
-  // TODO: Change baud rate and then re-connect?
+		sendCommand(F("set ip dhcp 1"));
+	} 
+	else
+	{
+		//setAdhocParams();
+		createAdHocNetwork(ssid);
+	}
+	// Turn off status messages
+	// sendCommand(F("set sys printlvl 0"));
 
-  // Turn off RX data echo
-  // TODO: Should really treat as bitmask
-  // sendCommand(F("set uart mode 0"));
+	// TODO: Change baud rate and then re-connect?
+
+	// Turn off RX data echo
+	// TODO: Should really treat as bitmask
+	// sendCommand(F("set uart mode 0"));
 }
 
 void WiFlyDevice::setAdhocParams()
 {
 	// Disable Auto-connect
 	sendCommand(F("set wlan join 4"));
-	
+
 	// Disable Authentication for AdHoc Mode
 	sendCommand(F("set wlan auth 0"));
-	
+
 	// Enable Auto IP assignment, This allows the WiFly to automatically
 	// assign the IP addresses
 	sendCommand(F("set ip d 2"));
+}
+
+void WiFlyDevice::setUseExternalAntenna(boolean useExternal) {
+	if (commandModeFlag) exitCommandMode();
+	enterCommandMode();
+	sendCommand("set wlan ext_antenna ", true);
+	sendCommand(useExternal ? "1" : "0");
+	//sendCommand(F("save"), false, "Storing in config");
+	sendCommand(F("save"));
+	reboot();
 }
 
 //
@@ -647,42 +656,42 @@ void WiFlyDevice::setAdhocParams()
 // 
 boolean WiFlyDevice::createAdHocNetwork(const char *ssid)
 {	
-  /*
-    Create and AdHoc network with the WiFly Shield.
-   */
+	/*
+	   Create and AdHoc network with the WiFly Shield.
+	   */
 
-  DEBUG_LOG(1, "Entered WiFlyDevice::beginAdhoc()");
+	DEBUG_LOG(1, "Entered WiFlyDevice::beginAdhoc()");
 
-  reboot(); // Reboot to get device into known state
-  
-  enterCommandMode();
+	reboot(); // Reboot to get device into known state
 
-  // Turn on Adhoc Mode
-  sendCommand(F("set wlan join 4"));
-  // Set SSID of Adhoc Network
-  sendCommand(F("set wlan ssid "),true);
-  sendCommand(ssid);
-  // Set Channel for Adhoc Network
-  sendCommand(F("set wlan chan 1"));
-  // Set IP for Adhoc Network
-  sendCommand(F("set ip address 169.254.1.1"));
-  sendCommand(F("set ip netmask 255.255.0.0"));
-  // Turn off DHCP
-  sendCommand(F("set ip dhcp 0"));
-  // Set server port
-  sendCommand(F("set ip localport "), true);
-  uart->print(serverPort);
-  sendCommand("");
+	enterCommandMode();
 
-  // Turn off remote connect message
-  sendCommand(F("set comm remote 0"));
+	// Turn on Adhoc Mode
+	sendCommand(F("set wlan join 4"));
+	// Set SSID of Adhoc Network
+	sendCommand(F("set wlan ssid "),true);
+	sendCommand(ssid);
+	// Set Channel for Adhoc Network
+	sendCommand(F("set wlan chan 1"));
+	// Set IP for Adhoc Network
+	sendCommand(F("set ip address 169.254.1.1"));
+	sendCommand(F("set ip netmask 255.255.0.0"));
+	// Turn off DHCP
+	sendCommand(F("set ip dhcp 0"));
+	// Set server port
+	sendCommand(F("set ip localport "), true);
+	uart->print(serverPort);
+	sendCommand("");
 
-  sendCommand(F("save"), false, "Storing in config");
-  //Ensures sucessful reboot. See requireFlowControl for more info.
-  sendCommand(F("get uart"), false, "Flow=0x1");
-  reboot();
-  
-  //After rebooting, your AdHoc network will be available.
+	// Turn off remote connect message
+	sendCommand(F("set comm remote 0"));
+
+	sendCommand(F("save"), false, "Storing in config");
+	//Ensures sucessful reboot. See requireFlowControl for more info.
+	sendCommand(F("get uart"), false, "Flow=0x1");
+	reboot();
+
+	//After rebooting, your AdHoc network will be available.
 }
 
 void WiFlyDevice::useUDP(int localPort, int remotePort)
@@ -714,153 +723,151 @@ void WiFlyDevice::useUDP(int localPort, int remotePort)
 }
 
 boolean WiFlyDevice::join(const char *ssid) {
-  /*
-   */
-  // TODO: Handle other authentication methods
-  // TODO: Handle escaping spaces/$ in SSID
-  // TODO: Allow for timeout?
+	// TODO: Handle other authentication methods
+	// TODO: Handle escaping spaces/$ in SSID
+	// TODO: Allow for timeout?
 
-  // TODO: Do we want to set the passphrase/key to empty when they're
-  //       not required? (Probably not necessary as I think module
-  //       ignores them when they're not required.)
-  bool joined = false;
-  String command = "join ";
-  command += ssid;
-  char charBuf[command.length()+1];
-  
-  if (commandModeFlag) 
-  {
+	// TODO: Do we want to set the passphrase/key to empty when they're
+	//       not required? (Probably not necessary as I think module
+	//       ignores them when they're not required.)
+	bool joined = false;
+	String command = "join ";
+	command += ssid;
+	char charBuf[command.length()+1];
+
+	if (commandModeFlag) 
+	{
 		exitCommandMode();
 	}
 	enterCommandMode();
- 
-  command.toCharArray(charBuf, command.length()+1);
-  joined=sendCommand(charBuf,false,"Associated!");
-  // TODO: Actually detect failure to associate
-  // TODO: Handle connecting to Adhoc device
 
-  exitCommandMode();
-  return joined;
+	command.toCharArray(charBuf, command.length()+1);
+	joined=sendCommand(charBuf,false,"Associated!");
+	// TODO: Actually detect failure to associate
+	// TODO: Handle connecting to Adhoc device
+
+	exitCommandMode();
+	return joined;
 }
 
 
 boolean WiFlyDevice::join(const char *ssid, const char *passphrase, boolean isWPA) 
 {
-  String command="";
-  if (commandModeFlag) 
-  {
+	String command="";
+	if (commandModeFlag) 
+	{
 		exitCommandMode();
 	}
 	enterCommandMode();
-  // TODO: Handle escaping spaces/$ in passphrase and SSID
-  command="set wlan ";
-  if (isWPA) {
-    command += " passphrase ";
-  } else {
-    command += " key ";
-  }
-  command += passphrase;  
-  // There must be a better way to convert string -> char[] in arduino... ?
-  char charBuf[command.length()+1];
-  command.toCharArray(charBuf, command.length()+1);
-  sendCommand(charBuf);
+	// TODO: Handle escaping spaces/$ in passphrase and SSID
+	command="set wlan ";
+	if (isWPA) {
+		command += " passphrase ";
+	} else {
+		command += " key ";
+	}
+	command += passphrase;  
+	// There must be a better way to convert string -> char[] in arduino... ?
+	char charBuf[command.length()+1];
+	command.toCharArray(charBuf, command.length()+1);
+	sendCommand(charBuf);
 
-  command="join ";
-  command += ssid;
-  char charBuf2[command.length()+1];
-  command.toCharArray(charBuf2, command.length()+1);
-  return sendCommand(charBuf2,false,"Associated!");
+	command="join ";
+	command += ssid;
+	char charBuf2[command.length()+1];
+	command.toCharArray(charBuf2, command.length()+1);
+	return sendCommand(charBuf2,false,"Associated!");
 }
 
 #define IP_ADDRESS_BUFFER_SIZE 16 // "255.255.255.255\0"
 
 const char * WiFlyDevice::ip() {
-  /*
+	/*
 
-    The return value is intended to be dropped directly
-    into calls to 'print' or 'println' style methods.
+	   The return value is intended to be dropped directly
+	   into calls to 'print' or 'println' style methods.
 
-   */
-  static char ip[IP_ADDRESS_BUFFER_SIZE] = "";
+*/
+	static char ip[IP_ADDRESS_BUFFER_SIZE] = "";
 
-  // TODO: Ensure we're not in a connection?
+	// TODO: Ensure we're not in a connection?
 
-  enterCommandMode();
+	enterCommandMode();
 
-  // Version 2.19 of the WiFly firmware has a "get ip a" command but
-  // we can't use it because we want to work with 2.18 too.
-  sendCommand(F("get ip"), false, "IP=");
+	// Version 2.19 of the WiFly firmware has a "get ip a" command but
+	// we can't use it because we want to work with 2.18 too.
+	sendCommand(F("get ip"), false, "IP=");
 
-  char newChar;
-  byte offset = 0;
+	char newChar;
+	byte offset = 0;
 
-  // Copy the IP address from the response into our buffer
-  while (offset < IP_ADDRESS_BUFFER_SIZE) {
-    newChar = uart->read();
+	// Copy the IP address from the response into our buffer
+	while (offset < IP_ADDRESS_BUFFER_SIZE) {
+		newChar = uart->read();
 
-    if (newChar == ':') {
-      ip[offset] = '\x00';
-      break;
-    } else if (newChar != -1) {
-      ip[offset] = newChar;
-      offset++;
-    }
-  }
+		if (newChar == ':') {
+			ip[offset] = '\x00';
+			break;
+		} else if (newChar != -1) {
+			ip[offset] = newChar;
+			offset++;
+		}
+	}
 
-  // This handles the case when we reach the end of the buffer
-  // in the loop. (Which should never happen anyway.)
-  // And hopefully this prevents us from failing completely if
-  // there's a mistake above.
-  ip[IP_ADDRESS_BUFFER_SIZE-1] = '\x00';
+	// This handles the case when we reach the end of the buffer
+	// in the loop. (Which should never happen anyway.)
+	// And hopefully this prevents us from failing completely if
+	// there's a mistake above.
+	ip[IP_ADDRESS_BUFFER_SIZE-1] = '\x00';
 
-  // This should skip the remainder of the output.
-  // TODO: Handle this better?
-  waitForResponse("<");
-  while (uart->read() != ' ') {
-    // Skip the prompt
-  }
+	// This should skip the remainder of the output.
+	// TODO: Handle this better?
+	waitForResponse("<");
+	while (uart->read() != ' ') {
+		// Skip the prompt
+	}
 
-  // For some reason the "sendCommand" approach leaves the system
-  // in a state where it misses the first/next connection so for
-  // now we don't check the response.
-  // TODO: Fix this
-  uart->println("exit");
-  //sendCommand("exit", false, "EXIT");
+	// For some reason the "sendCommand" approach leaves the system
+	// in a state where it misses the first/next connection so for
+	// now we don't check the response.
+	// TODO: Fix this
+	uart->println("exit");
+	//sendCommand("exit", false, "EXIT");
 
-  return ip;
+	return ip;
 }
 
 boolean WiFlyDevice::configure(byte option, unsigned long value) {
-  /*
-   */
+	/*
+	*/
 
-  // TODO: Allow options to be supplied earlier?
+	// TODO: Allow options to be supplied earlier?
 
-  switch (option) {
-    case WIFLY_BAUD:
-      // TODO: Use more of standard command sending method?
-      enterCommandMode();
-      uart->print("set uart instant ");
-      uart->println(value);
-	  //NOTE: not sure what value this should really be but I think it relates to the 10*bitrate delay mentioned in the spec, 500ms seems to work at least for the range of 2400 to 921600 baud.
-      delay(500); // If we don't have this here when we specify the
-                 // baud as a number rather than a string it seems to
-                 // fail. TODO: Find out why.
-      SPIuart.begin(value);
-      // For some reason the following check fails if it occurs before
-      // the change of SPI UART serial rate above--even though the
-      // documentation says the AOK is returned at the old baud
-      // rate. TODO: Find out why
-	  // NOTE: the docs (11/9/2011) do specify AOK is output at the new baud rate
-      if (!findInResponse("AOK", 100)) {
-        return false;
-      }
-      break;
-    default:
-      return false;
-      break;
-  }
-  return true;
+	switch (option) {
+		case WIFLY_BAUD:
+			// TODO: Use more of standard command sending method?
+			enterCommandMode();
+			uart->print("set uart instant ");
+			uart->println(value);
+			//NOTE: not sure what value this should really be but I think it relates to the 10*bitrate delay mentioned in the spec, 500ms seems to work at least for the range of 2400 to 921600 baud.
+			delay(500); // If we don't have this here when we specify the
+			// baud as a number rather than a string it seems to
+			// fail. TODO: Find out why.
+			SPIuart.begin(value);
+			// For some reason the following check fails if it occurs before
+			// the change of SPI UART serial rate above--even though the
+			// documentation says the AOK is returned at the old baud
+			// rate. TODO: Find out why
+			// NOTE: the docs (11/9/2011) do specify AOK is output at the new baud rate
+			if (!findInResponse("AOK", 100)) {
+				return false;
+			}
+			break;
+		default:
+			return false;
+			break;
+	}
+	return true;
 }
 
 
@@ -873,8 +880,8 @@ void WiFlyDevice::setServerPort(uint16_t port) {
 long WiFlyDevice::getTime(){
 
 	/*
-	Returns the time based on the NTP settings and time zone.
-	*/
+	   Returns the time based on the NTP settings and time zone.
+	   */
 
 	char newChar;
 	byte offset = 0;
@@ -887,27 +894,27 @@ long WiFlyDevice::getTime(){
 
 	// copy the time from the response into our buffer
 	while (offset < TIME_SIZE) {
-			newChar = uart->read();
+		newChar = uart->read();
 
-			if (newChar != -1) {
-				buffer[offset++] = newChar;
-			}
+		if (newChar != -1) {
+			buffer[offset++] = newChar;
+		}
 	}
 	buffer[offset]=0;
-  // This should skip the remainder of the output.
-  // TODO: Handle this better?
-  waitForResponse("<");
-  findInResponse(" ");
+	// This should skip the remainder of the output.
+	// TODO: Handle this better?
+	waitForResponse("<");
+	findInResponse(" ");
 
-  // For some reason the "sendCommand" approach leaves the system
-  // in a state where it misses the first/next connection so for
-  // now we don't check the response.
-  // TODO: Fix this
-  uart->println(F("exit"));
-  //sendCommand(F("exit"), false, "EXIT");
+	// For some reason the "sendCommand" approach leaves the system
+	// in a state where it misses the first/next connection so for
+	// now we don't check the response.
+	// TODO: Fix this
+	uart->println(F("exit"));
+	//sendCommand(F("exit"), false, "EXIT");
 
 
-  return strtol(buffer, NULL, 0);
+	return strtol(buffer, NULL, 0);
 }
 
 
